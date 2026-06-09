@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:attendance_app/screens/student/student_home.dart';
-import 'package:attendance_app/screens/sheikh/sheikh_home.dart';
-import 'package:attendance_app/screens/supervisor/supervisor_home.dart';
-import 'package:attendance_app/screens/admin/admin_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
