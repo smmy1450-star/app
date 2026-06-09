@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screens/login_page.dart';
+import 'screens/login/login_page.dart';
 import 'screens/student/student_home.dart';
 import 'screens/student/student_attendance.dart';
 import 'screens/student/student_hifz.dart';
