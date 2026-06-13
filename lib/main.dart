@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screens/login/login_page.dart';
+
+// صفحات الطالب
 import 'screens/student/student_home.dart';
 import 'screens/student/student_attendance.dart';
 import 'screens/student/student_hifz.dart';
 import 'screens/student/student_calendar.dart';
+
+// صفحة الشيخ
+import 'screens/sheikh/sheikh_home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +30,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      // أول صفحة تظهر
-      home: LoginPage(),
+      // أول صفحة تظهر — فتح صفحة الشيخ مباشرة
+      home: SheikhHome(),
 
       routes: {
         "/studentHome": (_) => StudentHome(),

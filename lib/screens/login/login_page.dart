@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// استيراد الصفحات حسب الأدوار
 import 'package:attendance_app/screens/student/student_home.dart';
+import 'package:attendance_app/screens/sheikh/sheikh_home.dart';
+import 'package:attendance_app/screens/supervisor/supervisor_home.dart';
+import 'package:attendance_app/screens/admin/admin_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,39 +29,48 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
+      // 1) نجيب المستخدم بناءً على الإيميل فقط
       final response = await Supabase.instance.client
           .from('users')
           .select()
           .eq('email', email)
-          .eq('password', password)
           .maybeSingle();
 
       if (response == null) {
-        setState(() => errorMessage = "بيانات الدخول غير صحيحة");
+        setState(() => errorMessage = "الإيميل غير موجود");
+        return;
+      }
+
+      // 2) نتحقق من كلمة المرور داخل Flutter
+      if (response['password'] != password) {
+        setState(() => errorMessage = "كلمة المرور غير صحيحة");
         return;
       }
 
       final role = response['role'];
 
+      if (!mounted) return;
+
+      // 3) نوجّه المستخدم حسب الدور
       if (role == 'student') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => StudentHome()),
+          MaterialPageRoute(builder: (_) => const StudentHome()),
         );
       } else if (role == 'sheikh') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => SheikhHome()),
+          MaterialPageRoute(builder: (_) => const SheikhHome()),
         );
       } else if (role == 'supervisor') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => SupervisorHome()),
+          MaterialPageRoute(builder: (_) => const SupervisorHome()),
         );
       } else if (role == 'admin') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => AdminHome()),
+          MaterialPageRoute(builder: (_) => const AdminHome()),
         );
       } else {
         setState(() => errorMessage = "دور المستخدم غير معروف");
