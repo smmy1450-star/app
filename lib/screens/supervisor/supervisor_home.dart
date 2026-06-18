@@ -12,6 +12,48 @@ class _SupervisorHomeState extends State<SupervisorHome> {
   final SupabaseClient supabase = Supabase.instance.client;
 
   // حقول إدخال بيانات الشيخ
+  final List<String> nationalitiesList = [
+  "سعودي / Saudi", "يمني / Yemeni", "مصري / Egyptian", "باكستاني / Pakistani", 
+  "أفغاني / Afghan", "ألباني / Albanian", "جزائري / Algerian", "أمريكي / American", 
+  "أندوراني / Andorran", "أنغولي / Angolan", "أرجنتيني / Argentine", "أرميني / Armenian", 
+  "أسترالي / Australian", "نمساوي / Austrian", "أذربيجاني / Azerbaijani", "بحريني / Bahraini", 
+  "بنجلاديشي / Bangladeshi", "بربادي / Barbadian", "بلجيكي / Belgian", "بليزي / Belizean", 
+  "بنيني / Beninese", "بوتاني / Bhutanese", "بوليفي / Bolivian", "بوسني / Bosnian", 
+  "بوتسواني / Botswanan", "برازيلي / Brazilian", "بريطاني / British", "بروناي / Bruneian", 
+  "بلغاري / Bulgarian", "بوركيني / Burkinabe", "بوروندي / Burundian", "كمبودي / Cambodian", 
+  "كاميروني / Cameroonian", "كندي / Canadian", "تشادي / Chadian", "تشيلي / Chilean", 
+  "صيني / Chinese", "كولومبي / Colombian", "كوموري / Comoran", "كونغولي / Congolese", 
+  "كوستاريكي / Costa Rican", "كرواتي / Croatian", "كوبي / Cuban", "قبرصي / Cypriot", 
+  "تشيكي / Czech", "دنماركي / Danish", "جيبوتي / Djiboutian", "دومينيكاني / Dominican", 
+  "هولندي / Dutch", "إكوادوري / Ecuadorian", "إماراتي / Emirati", "إريتري / Eritrean", 
+  "إستوني / Estonian", "إثيوبي / Ethiopian", "فيجي / Fijian", "فنلندي / Finnish", 
+  "فرنسي / French", "جابوني / Gabonese", "جامبي / Gambian", "جورجي / Georgian", 
+  "ألماني / German", "غاني / Ghanaian", "يوناني / Greek", "غواتيمالي / Guatemalan", 
+  "غيني / Guinean", "هايتي / Haitian", "هندوراسي / Honduran", "مجري / Hungarian", 
+  "آيسلندي / Icelandic", "هندي / Indian", "إندونيسي / Indonesian", "إيراني / Iranian", 
+  "عراقي / Iraqi", "أيرلندي / Irish", "إيطالي / Italian", "عاجي / Ivorian", 
+  "جامايكي / Jamaican", "ياباني / Japanese", "أردني / Jordanian", "كازاخستاني / Kazakhstani", 
+  "كيني / Kenyan", "كويتي / Kuwaiti", "قرغيزي / Kyrgyz", "لاوسي / Laotian", 
+  "لاتفي / Latvian", "لبناني / Lebanese", "ليبيري / Liberian", "ليبي / Libyan", 
+  "ليتواني / Lithuanian", "لوكسمبورغي / Luxembourgish", "مقدوني / Macedonian", 
+  "مدغشقري / Malagasy", "مالاوي / Malawian", "ماليزي / Malaysian", "مالديفي / Maldivian", 
+  "مالي / Malian", "مالطي / Maltese", "موريتاني / Mauritanian", "موريشيوسي / Mauritian", 
+  "مكسيكي / Mexican", "مولدوفي / Moldovan", "موناكي / Monacan", "منغولي / Mongolian", 
+  "مغربي / Moroccan", "موزمبيقي / Mozambican", "ناميبي / Namibian", "نيبالي / Nepalese", 
+  "نيوزيلندي / New Zealander", "نيكاراغوي / Nicaraguan", "نيجري / Nigerien", 
+  "نيجيري / Nigerian", "كوري / Korean", "نرويجي / Norwegian", "عماني / Omani", 
+  "فلسطيني / Palestinian", "بنصفي / Panamanian", "باراغواياني / Paraguayan", 
+  "بيروفي / Peruvian", "فلبيني / Filipino", "بولندي / Polish", "برتغالي / Portuguese", 
+  "قطري / Qatari", "روماني / Romanian", "روسي / Russian", "رواندي / Rwandan", 
+  "ساموائي / Samoan", "سان ماريني / San Marinese", "سوداني / Sudanese", "سنغالي / Senegalese", 
+  "صربي / Serbian", "سيراليوني / Sierra Leonean", "سنغافوري / Singaporean", 
+  "سلوفاكي / Slovak", "سلوفيني / Slovenian", "صومالي / Somali", "جنوب أفريقي / South African", 
+  "إسباني / Spanish", "سريلانكي / Sri Lankan", "سويدي / Swedish", "سويسري / Swiss", 
+  "سوري / Syrian", "تايواني / Taiwanese", "طاجيكي / Tajik", "تنزاني / Tanzanian", 
+  "تايلاندي / Thai", "توغولي / Togolese", "تونسي / Tunisian", "تركي / Turkish", 
+  "تركمانستاني / Turkmen", "أوغندي / Ugandan", "أوكراني / Ukrainian", "أوروغواياني / Uruguayan", 
+  "أوزبكي / Uzbek", "فنزويلي / Venezuelan", "فيتنامي / Vietnamese", "زيمبابوي / Zimbabwean"
+];
   final TextEditingController _sheikhNameController = TextEditingController();
   final TextEditingController _sheikhPhoneController = TextEditingController();
   final TextEditingController _sheikhMosqueController = TextEditingController();
@@ -251,7 +293,30 @@ class _SupervisorHomeState extends State<SupervisorHome> {
                   _buildTextField(_sheikhPhoneController, "رقم جوال الشيخ", isNumber: true),
                   _buildTextField(_sheikhMosqueController, "المسجد التابع للشيخ"),
                   _buildTextField(_sheikhHalagaNameController, "اسم حلقة الشيخ الحالية"),
-                  _buildTextField(_sheikhNationalityController, "جنسية الشيخ"),
+                  Padding(
+  padding: const EdgeInsets.symmetric(vertical: 8.0),
+  child: DropdownButtonFormField<String>(
+    decoration: InputDecoration(
+      labelText: "جنسية الشيخ",
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      filled: true,
+      fillColor: Colors.grey[100],
+    ),
+    isExpanded: true,
+    hint: const Text("اختر الجنسية"),
+    items: nationalitiesList.map((String nationality) {
+      return DropdownMenuItem<String>(
+        value: nationality,
+        child: Text(nationality),
+      );
+    }).toList(),
+    onChanged: (String? newValue) {
+      setState(() {
+        _sheikhNationalityController.text = newValue ?? "";
+      });
+    },
+  ),
+),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -288,7 +353,30 @@ class _SupervisorHomeState extends State<SupervisorHome> {
                   const SizedBox(height: 12),
                   
                   _buildTextField(_studentPhoneController, "رقم جوال الطالب", isNumber: true),
-                  _buildTextField(_studentNationalityController, "جنسية الطالب"),
+                 Padding(
+  padding: const EdgeInsets.symmetric(vertical: 8.0),
+  child: DropdownButtonFormField<String>(
+    decoration: InputDecoration(
+      labelText: "جنسية الطالب",
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      filled: true,
+      fillColor: Colors.grey[100],
+    ),
+    isExpanded: true,
+    hint: const Text("اختر الجنسية"),
+    items: nationalitiesList.map((String nationality) {
+      return DropdownMenuItem<String>(
+        value: nationality,
+        child: Text(nationality),
+      );
+    }).toList(),
+    onChanged: (String? newValue) {
+      setState(() {
+        _studentNationalityController.text = newValue ?? "";
+      });
+    },
+  ),
+),
                   const SizedBox(height: 12),
                   
                   DropdownButtonFormField<String>(
