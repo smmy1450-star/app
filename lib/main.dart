@@ -1,3 +1,4 @@
+import 'package:attendance_app/screens/supervisor/supervisor_home.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,7 +9,7 @@ import 'screens/student/student_hifz.dart';
 import 'screens/student/student_calendar.dart';
 
 // صفحة الشيخ
-import 'screens/sheikh/sheikh_home.dart';
+import 'screens/supervisor/supervisor_home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // أول صفحة تظهر — فتح صفحة الشيخ مباشرة
-      home: SheikhHome(),
+      home: const SupervisorHome(),
 
       routes: {
         "/studentHome": (_) => StudentHome(),
