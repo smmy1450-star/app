@@ -9,6 +9,8 @@ import 'screens/student/student_calendar.dart';
 
 // صفحة الشيخ
 import 'screens/sheikh/sheikh_home.dart';
+// صفحة المشرف
+import 'screens/supervisor/supervisor_home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +33,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // أول صفحة تظهر — فتح صفحة الشيخ مباشرة
-      home: SheikhHome(),
+      home: SupervisorHome(),
 
       routes: {
         "/studentHome": (_) => StudentHome(),
