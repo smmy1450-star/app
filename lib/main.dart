@@ -1,18 +1,16 @@
+import 'package:attendance_app/screens/supervisor/supervisor_home.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// صفحات الطالب
-import 'screens/student/student_home.dart';
-import 'screens/student/student_attendance.dart';
-import 'screens/student/student_hifz.dart';
-import 'screens/student/student_calendar.dart';
-
 // صفحة الشيخ
-import 'screens/sheikh/sheikh_home.dart';
+import 'screens/sheikh/sheikh_attendance.dart';
 // صفحة المشرف
 import 'screens/supervisor/supervisor_home.dart';
 
-void main() async {
+// إضافة المتغير هنا فوق MyApp
+ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
@@ -29,17 +27,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    // الاستماع لتغييرات الثيم (نهاري / ليلي)
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, ThemeMode currentMode, __) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Attendance App',
 
-      // أول صفحة تظهر — فتح صفحة الشيخ مباشرة
-      home: SupervisorHome(),
+          // الثيمات
+          themeMode: currentMode,
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
 
-      routes: {
-        "/studentHome": (_) => StudentHome(),
-        "/studentAttendance": (_) => StudentAttendancePage(studentId: "TEMP"),
-        "/studentHifz": (_) => StudentHifzPage(studentId: "TEMP"),
-        "/studentCalendar": (_) => StudentCalendarPage(halaqaId: "TEMP"),
+          // الصفحة الرئيسية
+          home: const SheikhAttendancePage(),
+        );
       },
     );
   }
