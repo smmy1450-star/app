@@ -321,21 +321,30 @@ class _SupervisorHomeState extends State<SupervisorHome> {
                   _buildTextField(_sheikhPhoneController, "رقم جوال الشيخ", isNumber: true),
                   _buildTextField(_sheikhMosqueController, "المسجد التابع للشيخ"),
                   _buildTextField(_sheikhHalagaNameController, "اسم حلقة الشيخ الحالية"),
-                  Padding(
+
+                 Padding(
   padding: const EdgeInsets.symmetric(vertical: 8.0),
   child: DropdownButtonFormField<String>(
+    dropdownColor: theme.scaffoldBackgroundColor,
+    iconEnabledColor: theme.iconTheme.color,
     decoration: InputDecoration(
-      labelText: "جنسية الشيخ",
+      labelText: "الجنسية",
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       filled: true,
-      fillColor: Colors.grey[100],
+      fillColor: theme.inputDecorationTheme.fillColor ?? theme.cardColor,
     ),
     isExpanded: true,
-    hint: const Text("اختر الجنسية"),
+    hint: Text(
+      "اختر الجنسية",
+      style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+    ),
     items: nationalitiesList.map((String nationality) {
       return DropdownMenuItem<String>(
         value: nationality,
-        child: Text(nationality),
+        child: Text(
+          nationality,
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+        ),
       );
     }).toList(),
     onChanged: (String? newValue) {
