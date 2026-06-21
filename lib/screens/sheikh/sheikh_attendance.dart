@@ -10,75 +10,71 @@ class SheikhAttendancePage extends StatefulWidget {
 }
 
 class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
+  final SupabaseClient supabase = Supabase.instance.client;
+
   List<Map<String, dynamic>> students = [];
   bool loadingStudents = true;
 
   DateTime selectedDate = DateTime.now();
   String searchQuery = "";
 
+  String getArabicDayName(DateTime date) {
+    const days = [
+      "الاثنين",
+      "الثلاثاء",
+      "الأربعاء",
+      "الخميس",
+      "الجمعة",
+      "السبت",
+      "الأحد",
+    ];
+    return days[date.weekday - 1];
+  }
+
   @override
   void initState() {
     super.initState();
+
+    students = List.generate(
+      5,
+      (i) => {
+        "id": "dummy_$i",
+        "name": "—",
+        "present": null,
+        "hifz": null,
+        "murajaah": null,
+      },
+    );
+
     loadStudents();
   }
 
-  // -----------------------------
-  // جلب الطلاب من Supabase + صفوف افتراضية
-  // -----------------------------
   Future<void> loadStudents() async {
-    final supabase = Supabase.instance.client;
-
     final data = await supabase
         .from('students')
         .select('id, name')
         .order('name');
 
-    if (data.isEmpty) {
-      // صفوف افتراضية إذا ما فيه طلاب
-      students = List.generate(
-        5,
-        (i) => {
-          "id": "dummy_$i",
-          "name": "—",
-          "present": null,
-          "hifz": null,
-          "murajaah": null,
-        },
-      );
+    if (data.isNotEmpty) {
+      students = data
+          .map(
+            (s) => {
+              "id": s['id'],
+              "name": s['name'],
+              "present": null,
+              "hifz": null,
+              "murajaah": null,
+            },
+          )
+          .toList();
 
-      setState(() {
-        loadingStudents = false;
-      });
-
-      return;
+      await loadAttendanceForDate();
     }
 
-    students = data
-        .map(
-          (s) => {
-            "id": s['id'],
-            "name": s['name'],
-            "present": null,
-            "hifz": null,
-            "murajaah": null,
-          },
-        )
-        .toList();
-
-    await loadAttendanceForDate();
-
-    if (mounted) {
-      setState(() {
-        loadingStudents = false;
-      });
-    }
+    setState(() => loadingStudents = false);
   }
 
-  // -----------------------------
-  // جلب الحضور حسب التاريخ
-  // -----------------------------
   Future<void> loadAttendanceForDate() async {
-    final supabase = Supabase.instance.client;
     final date = DateFormat("yyyy-MM-dd").format(selectedDate);
 
     final data = await supabase.from('attendance').select().eq('date', date);
@@ -100,31 +96,25 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
       }
     }
 
-    if (mounted) setState(() {});
+    setState(() {});
   }
 
-  // -----------------------------
-  // حفظ الحضور
-  // -----------------------------
   Future<void> saveToSupabase() async {
-    final supabase = Supabase.instance.client;
     final date = DateFormat("yyyy-MM-dd").format(selectedDate);
 
     for (var student in students) {
       if (student["id"].toString().startsWith("dummy_")) continue;
 
-      final studentId = student["id"];
-
       final existing = await supabase
           .from('attendance')
           .select()
-          .eq('student_id', studentId)
+          .eq('student_id', student['id'])
           .eq('date', date)
           .maybeSingle();
 
       if (existing == null) {
         await supabase.from('attendance').insert({
-          'student_id': studentId,
+          'student_id': student['id'],
           'date': date,
           'status': student["present"] ?? false,
           'hifz': student["hifz"] ?? false,
@@ -142,51 +132,47 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
       }
     }
 
-    if (!mounted) return;
-
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text("تم حفظ الحضور بنجاح")));
   }
 
-  // -----------------------------
-  // تصميم الخانة
-  // -----------------------------
-  Widget buildCell(dynamic value, Function(dynamic) onChanged) {
-    if (value == true) {
-      return Checkbox(
-        value: true,
-        onChanged: (_) => onChanged(null),
-        activeColor: Colors.green,
-      );
-    }
-
-    return GestureDetector(
-      onTap: () => onChanged(true),
-      child: Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          color: Colors.white,
+  Widget buildCell(
+    dynamic value,
+    Function(dynamic) onChanged,
+    Color primaryColor,
+  ) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: GestureDetector(
+        onTap: () => onChanged(value == true ? null : true),
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            color: value == null
+                ? Colors.white
+                : value == true
+                ? primaryColor.withOpacity(0.2)
+                : Colors.red.withOpacity(0.2),
+          ),
+          child: value == null
+              ? null
+              : Icon(
+                  value == true ? Icons.check : Icons.close,
+                  color: value == true ? primaryColor : Colors.red,
+                ),
         ),
       ),
     );
   }
 
-  // -----------------------------
-  // صح للكل
-  // -----------------------------
-  void markAll(int index) {
-    setState(() {
-      students[index]["present"] = true;
-      students[index]["hifz"] = true;
-      students[index]["murajaah"] = true;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
+
     if (loadingStudents) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -196,18 +182,18 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
         .toList();
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("تسجيل حضور الطلاب"),
         centerTitle: true,
-        backgroundColor: Colors.pink,
+        elevation: 0,
       ),
 
-      body: Column(
-        children: [
-          // التاريخ + السابق + التالي + اختيار التاريخ
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
@@ -223,7 +209,7 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
                 ),
 
                 Text(
-                  "تاريخ اليوم: ${DateFormat("yyyy/MM/dd").format(selectedDate)}",
+                  "${getArabicDayName(selectedDate)} — ${DateFormat("yyyy/MM/dd").format(selectedDate)}",
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -262,27 +248,21 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
                 ),
               ],
             ),
-          ),
 
-          // البحث
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: TextField(
+            const SizedBox(height: 20),
+
+            TextField(
               decoration: const InputDecoration(
                 labelText: "بحث عن الطالب",
+                border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (value) {
-                setState(() => searchQuery = value);
-              },
+              onChanged: (value) => setState(() => searchQuery = value),
             ),
-          ),
 
-          const SizedBox(height: 10),
+            const SizedBox(height: 20),
 
-          // الجدول
-          Expanded(
-            child: SingleChildScrollView(
+            SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 columnSpacing: 40,
@@ -291,7 +271,7 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
                   DataColumn(label: Text("الحضور")),
                   DataColumn(label: Text("الحفظ")),
                   DataColumn(label: Text("المراجعة")),
-                  DataColumn(label: Text("صح للكل")),
+                  DataColumn(label: Text("التحكم")),
                 ],
                 rows: List.generate(filteredStudents.length, (index) {
                   final student = filteredStudents[index];
@@ -304,28 +284,85 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
                       DataCell(
                         buildCell(student["present"], (v) {
                           setState(() => students[realIndex]["present"] = v);
-                        }),
+                        }, primaryColor),
                       ),
 
                       DataCell(
                         buildCell(student["hifz"], (v) {
                           setState(() => students[realIndex]["hifz"] = v);
-                        }),
+                        }, primaryColor),
                       ),
 
                       DataCell(
                         buildCell(student["murajaah"], (v) {
                           setState(() => students[realIndex]["murajaah"] = v);
-                        }),
+                        }, primaryColor),
                       ),
 
                       DataCell(
-                        ElevatedButton(
-                          onPressed: () => markAll(realIndex),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  bool allTrue =
+                                      students[realIndex]["present"] == true &&
+                                      students[realIndex]["hifz"] == true &&
+                                      students[realIndex]["murajaah"] == true;
+
+                                  setState(() {
+                                    if (allTrue) {
+                                      students[realIndex]["present"] = null;
+                                      students[realIndex]["hifz"] = null;
+                                      students[realIndex]["murajaah"] = null;
+                                    } else {
+                                      students[realIndex]["present"] = true;
+                                      students[realIndex]["hifz"] = true;
+                                      students[realIndex]["murajaah"] = true;
+                                    }
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                child: const Text("صح للكل"),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  bool allFalse =
+                                      students[realIndex]["present"] == false &&
+                                      students[realIndex]["hifz"] == false &&
+                                      students[realIndex]["murajaah"] == false;
+
+                                  setState(() {
+                                    if (allFalse) {
+                                      students[realIndex]["present"] = null;
+                                      students[realIndex]["hifz"] = null;
+                                      students[realIndex]["murajaah"] = null;
+                                    } else {
+                                      students[realIndex]["present"] = false;
+                                      students[realIndex]["hifz"] = false;
+                                      students[realIndex]["murajaah"] = false;
+                                    }
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                child: const Text("غ"),
+                              ),
+                            ],
                           ),
-                          child: const Text("صح للكل"),
                         ),
                       ),
                     ],
@@ -333,24 +370,20 @@ class _SheikhAttendancePageState extends State<SheikhAttendancePage> {
                 }),
               ),
             ),
-          ),
 
-          // زر حفظ
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: ElevatedButton(
+            const SizedBox(height: 20),
+
+            ElevatedButton(
               onPressed: saveToSupabase,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 15,
-                ),
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(45),
               ),
               child: const Text("حفظ الحضور", style: TextStyle(fontSize: 18)),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
