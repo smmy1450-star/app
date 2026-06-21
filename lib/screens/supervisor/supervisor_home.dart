@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:attendance_app/main.dart';
 
 class SupervisorHome extends StatefulWidget {
   const SupervisorHome({super.key});
@@ -234,17 +235,44 @@ class _SupervisorHomeState extends State<SupervisorHome> {
       ),
     );
   }
-
-  @override
+@override
   Widget build(BuildContext context) {
-    final Color primaryColor = const Color(0xFFB71C1C);
+    // 1. جلب حالة الثيم المظلم أو الفاتح تلقائياً
+    final theme = Theme.of(context);
+    
+    // 2. المحافظة على المتغير الأصلي لكي تختفي كل الأخطاء بالأسفل
+    final Color primaryColor = theme.primaryColor;
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor, // خلفية فخمة تتغير تلقائياً
       appBar: AppBar(
-        title: const Text("لوحة المشرف المسؤول"),
+        title: const Text("لوحة المشرفين المسؤولين"),
         centerTitle: true,
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
+        elevation: 0,
+        // 👇 هنا تم إضافة زر الشمس والقمر المضيء بشكل سليم
+        actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeNotifier,
+            builder: (_, currentMode, __) {
+              return IconButton(
+                icon: Icon(
+                  currentMode == ThemeMode.dark
+                      ? Icons.wb_sunny_rounded // شمس في الوضع الداكن
+                      : Icons.nightlight_round, // قمر في الوضع الفاتح
+                  color: currentMode == ThemeMode.dark ? Colors.amber : Colors.blueGrey,
+                ),
+                onPressed: () {
+                  // التبديل بين الوضعين فوراً عند الضغط
+                  themeNotifier.value = currentMode == ThemeMode.dark
+                      ? ThemeMode.light
+                      : ThemeMode.dark;
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: Directionality(
         textDirection: TextDirection.rtl,

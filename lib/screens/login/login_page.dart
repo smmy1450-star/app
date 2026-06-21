@@ -1,11 +1,7 @@
+import 'package:attendance_app/main.dart'; // استيراد متحكم الثيم
+import 'package:attendance_app/screens/supervisor/supervisor_home.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-// استيراد الصفحات حسب الأدوار
-import 'package:attendance_app/screens/student/student_home.dart';
-import 'package:attendance_app/screens/sheikh/sheikh_home.dart';
-import 'package:attendance_app/screens/supervisor/supervisor_home.dart';
-import 'package:attendance_app/screens/admin/admin_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,118 +11,164 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  String errorMessage = "";
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final SupabaseClient supabase = Supabase.instance.client;
+  bool _isLoading = false;
 
-  Future<void> login() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      setState(() => errorMessage = "الرجاء إدخال الإيميل وكلمة المرور");
-      return;
-    }
-
+  void _login() async {
+    setState(() => _isLoading = true);
     try {
-      // 1) نجيب المستخدم بناءً على الإيميل فقط
-      final response = await Supabase.instance.client
-          .from('users')
-          .select()
-          .eq('email', email)
-          .maybeSingle();
+      final response = await supabase.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      if (response == null) {
-        setState(() => errorMessage = "الإيميل غير موجود");
-        return;
-      }
-
-      // 2) نتحقق من كلمة المرور داخل Flutter
-      if (response['password'] != password) {
-        setState(() => errorMessage = "كلمة المرور غير صحيحة");
-        return;
-      }
-
-      final role = response['role'];
-
-      if (!mounted) return;
-
-      // 3) نوجّه المستخدم حسب الدور
-      if (role == 'student') {
+      if (response.user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const StudentHome()),
+          MaterialPageRoute(builder: (context) => const SupervisorHome()),
         );
-      } else if (role == 'sheikh') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const SheikhHome()),
-        );
-      } else if (role == 'supervisor') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const SupervisorHome()),
-        );
-      } else if (role == 'admin') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminHome()),
-        );
-      } else {
-        setState(() => errorMessage = "دور المستخدم غير معروف");
       }
     } catch (e) {
-      setState(() => errorMessage = "حدث خطأ أثناء تسجيل الدخول");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ في تسجيل الدخول: ${e.toString()}')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.pink[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeNotifier,
+            builder: (_, currentMode, __) {
+              return IconButton(
+                icon: Icon(
+                  currentMode == ThemeMode.dark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                  color: currentMode == ThemeMode.dark ? Colors.amber : Colors.blueGrey,
+                ),
+                onPressed: () {
+                  themeNotifier.value = currentMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                },
+              );
+            },
+          ),
+        ],
+      ),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "تسجيل الدخول",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 30),
-
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: "الإيميل",
-                  border: OutlineInputBorder(),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Center(
+              child: SizedBox(
+                width: 400, // تحديد العرض الأقصى لكي لا يتمدد البوكس بشكل عشوائي على المتصفح
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // أيقونة فخمة في الأعلى تعبر عن التطبيق
+                    Text(
+  "تسجيل الدخول",
+  textAlign: TextAlign.center,
+  style: TextStyle(
+    fontSize: 28, // تكبير حجم الخط ليعطي هيبة وفخامة
+    fontWeight: FontWeight.bold, // جعل الخط عريضاً وواضحاً
+    color: isDark ? Colors.white : const Color(0xFF0F172A),
+    letterSpacing: 1,
+  ),
+),
+                    const SizedBox(height: 40),
+                    
+                    // حقل البريد الإلكتروني
+                    TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: 'البريد الإلكتروني',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF112240) : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white10 : Colors.black12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // حقل كلمة المرور
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'كلمة المرور',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF112240) : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white10 : Colors.black12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // زر تسجيل الدخول الأنيق
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ElevatedButton(
+                            onPressed: _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: const Text(
+                              'تسجيل الدخول',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 15),
-
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "كلمة المرور",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: login,
-                child: const Text("تسجيل الدخول"),
-              ),
-
-              const SizedBox(height: 15),
-
-              Text(errorMessage, style: const TextStyle(color: Colors.red)),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
